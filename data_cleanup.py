@@ -1,16 +1,18 @@
 import pandas as pd
 import numpy as np
 import tkinter.filedialog
-from tkinter import messagebox
 import re
+import random
 import os
 import csv
 from datetime import datetime, timedelta
+from tkinter import messagebox
 
 def replace_special_character(text):
+    if pd.isnull(text):
+        return '""'
     text = re.sub(r'[^a-zA-Z0-9]', ' ', text)
-    # return '"'+text+'"'
-    # return text
+    text = text.strip()
     return f'"{text}"'
 
 def convert_date_format(date_str):
@@ -49,16 +51,21 @@ def main():
     
     string_columns = list(df.select_dtypes(include='object').columns)
     datetime_columns = list(df.select_dtypes(include='datetime').columns)
+    numeric_columns = list(df.select_dtypes(include='number').columns)
     
     #clean up these column
     for cols in string_columns:
         try:
-            pd.to_datetime(df[cols])
+            pd.to_datetime(df[cols], format="%Y-%m-%d")
             datetime_columns.append(cols)
         except:
+            df[cols] = df[cols].astype('string').fillna('')
             df[cols] = df[cols].apply(replace_special_character)
     for cols in datetime_columns:
-        df[cols] = df[cols].apply(convert_date_format)
+         df[cols] = pd.to_datetime(df[cols])
+         df[cols] = df[cols].apply(convert_date_format)
+    for cols in numeric_columns:
+         df[cols] = pd.to_numeric(df[cols])
     
     #output result
     output_name = filename[:filename.find('.')]+'_cleaned.csv'
